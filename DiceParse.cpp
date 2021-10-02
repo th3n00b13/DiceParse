@@ -60,7 +60,9 @@ namespace DiceParser{
         for(int i=0;i<Target.size();i++){
             _char val = Target[i];
 
-            if(std::isdigit(val) || val=='.' || ((val==Sub || val==Add) && !isNumber)){
+            if(val == u';') break;
+
+            if(std::isdigit(val) || val==u'.' || ((val==Sub || val==Add) && !isNumber)){
                 isNumber = true;
                 TempNum += val;
             }else{
@@ -101,8 +103,8 @@ namespace DiceParser{
         #endif
 
         AuxArr.swap(OutArr);
-
         unsigned stopcount=0;
+
         while(!AuxArr.empty() && stopcount++<1024){
             _Variant _val = AuxArr.front();
             if(std::holds_alternative<_char>(_val)){
@@ -142,7 +144,10 @@ namespace DiceParser{
         //std::cout<<std::endl;
         //if(Alert)std::cout<<"The formula may be ambiguous!"<<std::endl; // Alert : become true when detected something like : 2(3+4)
         if( OutArr.size()<2 )
-            return std::get<double>(OutArr.back());
+            if(!OutArr.empty())
+                return std::get<double>(OutArr.back());
+            else
+                return 0.;
         else
             throw std::runtime_error("Has multiple output");
     }
