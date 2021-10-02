@@ -12,11 +12,9 @@
 #include <algorithm>
 #include <unordered_map>
 
-#define usestod // Use this option if your compiler does NOT allow non-integer transform ... like me
+#define usestod // Use this option if your compiler does NOT allow non-integer transform ... like me (due to this probably modify required when you disable)
 
-//#define Debug
-
-// 255 255 255 255 - * ( + )
+//#define Debug // function will output some results(recommend to edit further)
 
 namespace DiceParser{
 
@@ -41,7 +39,7 @@ namespace DiceParser{
     };
     
     double parse(std::basic_string<_char> Target){
-        //std::basic_string<_char> Target = u"3d3d3d3";
+
         std::deque<_Variant> OutArr,AuxArr;
         std::vector<_char> OpArr;
         std::string TempNum;
@@ -56,22 +54,24 @@ namespace DiceParser{
             #endif
             TempNum.clear();if(Reset)isNumber = false;
         };
+
         _char last_val;
+
         for(int i=0;i<Target.size();i++){
             _char val = Target[i];
+
             if(std::isdigit(val) || val=='.' || ((val==Sub || val==Add) && !isNumber)){
                 isNumber = true;
                 TempNum += val;
             }else{
                 if(isNumber) f(0);
-                //OpArr.push_back(val);
                 val = std::tolower(val);
                 switch(val){
-                    case LeftBracket: if((isNumber&&(Alert=true||1)) || last_val == RightBracket )OpArr.push_back(u'*');OpArr.push_back(val);break;
+                    case LeftBracket: if((isNumber&&(Alert=true)) || last_val == RightBracket )OpArr.push_back(u'*');OpArr.push_back(val);break;
                     case RightBracket:
                         {
-                        while( !OpArr.empty() && OpArr.back() != LeftBracket){OutArr.push_back(OpArr.back());OpArr.pop_back();};
-                        if(OpArr.empty())throw std::runtime_error("Mismatch brackets");OpArr.pop_back();
+                            while( !OpArr.empty() && OpArr.back() != LeftBracket){OutArr.push_back(OpArr.back());OpArr.pop_back();};
+                            if(OpArr.empty())throw std::runtime_error("Mismatch brackets");OpArr.pop_back();
                         }
                         break;
                     default:
@@ -92,11 +92,11 @@ namespace DiceParser{
         while( !OpArr.empty() ){ OutArr.push_back(OpArr.back());OpArr.pop_back();}
         #ifdef Debug
             for(auto i:OutArr){
-                if(std::holds_alternative<_char>(i)){
+                if(std::holds_alternative<_char>(i))
                     std::printf("%c ",std::get<_char>(i));
-                }else{
+                else
                     std::cout<<std::get<0>(i)<<" ";
-                }
+                
             }
         #endif
 
@@ -140,7 +140,7 @@ namespace DiceParser{
             }std::cout<<std::endl;
         #endif
         //std::cout<<std::endl;
-        //if(Alert)std::cout<<"The formula may be ambiguous!"<<std::endl;
+        //if(Alert)std::cout<<"The formula may be ambiguous!"<<std::endl; // Alert : become true when detected something like : 2(3+4)
         if( OutArr.size()<2 )
             return std::get<double>(OutArr.back());
         else
@@ -178,9 +178,3 @@ int main(int argc,char *argv[]){
     }
     return 0;
 }
-
-// standalone(meaningless)
-// g++ -fPIC -static -lstdc++ -lgcc -std=c++20 DiceParse.cpp -o DiceParse.exe && ".\DiceParse.exe"
-
-// gcc required
-// g++ -std=c++17 DiceParse.cpp -o DiceParse.exe && ".\DiceParse.exe"

@@ -15,6 +15,8 @@ This thing was made because I just wanted to fully rewrite a bot that just rolls
 You can do is only run this program and input some formula and watch answers, if you don't modify source codes.
 Compiling this requires C++20 and probably only it is
 
+For reference, I use MSYS2 + gcc 10.3.0, and always compiling with `g++ -std=c++20 DiceParse.cpp -o DiceParse.exe` (or `g++ -fPIC -static -lstdc++ -lgcc -std=c++20 DiceParse.cpp -o DiceParse.exe` to make it able to run with Windows)
+
 ## How to use
 
 When you executed the application, a console will be shown
