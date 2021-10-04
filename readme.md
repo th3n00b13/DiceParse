@@ -3,9 +3,10 @@
 ## **What is this?**
 
 It's a garbage
+
 probably terrible code as we know
 
-Anyway, this is an expression parser but only simple arithmetics and ..also rolling dice digitally
+Anyway, this is an expression parser but only simple arithmetics and ..also rolling dice digitally.
 The used algorithm is the Shunting-yard algorithm because my skill is not enough to make a higher one.
 
 This thing was made because I just wanted to fully rewrite a bot that just rolls some dices.
@@ -32,6 +33,8 @@ program shows answer
 if you want to exit, just type exit and press enter, and everything is done
 
 Be careful, this program **ONLY takes simple formulas: functions and some operators, even variables are unavailable**! (Only allows `+`(Add), `-`(Sub), `*`(Mul), `/`(Div), `(`, `)`(Brackets), and `D` )
+
+Also, a(b+c) will be parsed be like: a*(b+c)
 
 Functions:
 
