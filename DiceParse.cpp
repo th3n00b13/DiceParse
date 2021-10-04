@@ -25,12 +25,13 @@ namespace DiceParser{
 
     const _char 
                 LeftBracket = u'(' , RightBracket = u')' ,
-                Add = u'+' , Sub = u'-' , Mul = u'*' , Div = u'/' ;
+                Add = u'+' , Sub = u'-' , Mul = u'*' , Div = u'/' , Roll = u'd' , Comma = u',' ,
+                Commentout = u';' , Period = u'.';
 
     std::unordered_map<_char,unsigned> OperatorPrecedence{
         {LeftBracket,0},
         {RightBracket,0},
-        {u'd',3},
+        {Roll,3},
         {Mul,2},
         {Div,2},
         {Add,1},
@@ -59,22 +60,23 @@ namespace DiceParser{
         for(int i=0;i<Target.size();i++){
             _char val = Target[i];
 
-            if(val == u';') break;
-
-            if(std::isdigit(val) || val==u'.' || ((val==Sub || val==Add) && !isNumber)){
+            if(std::isdigit(val) || val==Period || ((val==Sub || val==Add) && !isNumber)){
                 isNumber = true;
                 TempNum += val;
             }else{
+                if(val == Commentout) break;
+
                 if(isNumber) f(0);
                 val = std::tolower(val);
                 switch(val){
-                    case LeftBracket: if((isNumber&&(Alert=true)) || last_val == RightBracket )OpArr.push_back(u'*');OpArr.push_back(val);break;
+                    case LeftBracket: if((isNumber&&(Alert=true)) || last_val == RightBracket )OpArr.push_back(Mul);OpArr.push_back(val);break;
                     case RightBracket:
                         {
                             while( !OpArr.empty() && OpArr.back() != LeftBracket){OutArr.push_back(OpArr.back());OpArr.pop_back();};
                             if(OpArr.empty())throw std::runtime_error("Mismatch brackets");OpArr.pop_back();
-                        }
-                        break;
+                        }break;
+                    case Comma:
+                        while( !OpArr.empty() && OpArr.back() != LeftBracket){OutArr.push_back(OpArr.back());OpArr.pop_back();}break;
                     default:
                         if( !OperatorPrecedence.contains(val) )throw std::runtime_error("Unknown operator");
                         unsigned currentprec = OperatorPrecedence.at(val);
@@ -115,7 +117,7 @@ namespace DiceParser{
                         case Sub:v1=std::get<double>(OutArr.back());OutArr.pop_back();v2=std::get<double>(OutArr.back());OutArr.pop_back();OutArr.push_back(v2-v1);break;
                         case Mul:v1=std::get<double>(OutArr.back());OutArr.pop_back();v2=std::get<double>(OutArr.back());OutArr.pop_back();OutArr.push_back(v2*v1);break;
                         case Div:v1=std::get<double>(OutArr.back());OutArr.pop_back();v2=std::get<double>(OutArr.back());OutArr.pop_back();OutArr.push_back(v2/v1);break;
-                        case u'd':{
+                        case Roll:{
                             v1=std::min(std::get<double>(OutArr.back()),1024.);OutArr.pop_back();
                             v2=std::get<double>(OutArr.back());OutArr.pop_back();
                             std::uniform_int_distribution<> dist(1l,static_cast<double>(v2));
