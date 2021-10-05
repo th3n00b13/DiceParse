@@ -15,7 +15,7 @@
 
 #define usestod // Use this option if your compiler does NOT allow non-integer transform ... like me (due to this probably modify required when you disable)
 
-#define Debug // function will output some results(recommend to edit further)
+//#define Debug // function will output some results(recommend to edit further)
 
 namespace DiceParser{
 
@@ -249,7 +249,7 @@ int main(int argc,char *argv[]){
         std::string IN;
         do{
             std::cout<<" > ";
-            std::cin>>IN;
+            std::getline(std::cin,IN);
             if(IN!="exit")
                 try{
                     double x = DiceParser::parse(stdstrtou16str(IN));
