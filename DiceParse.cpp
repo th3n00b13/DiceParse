@@ -13,6 +13,8 @@
 #include <vector>
 #include <variant>
 
+#define pi 3.141592653589793
+
 #define usestod // Use this option if your compiler does NOT allow non-integer transform ... like me (due to this probably modify required when you disable)
 
 //#define Debug // function will output some results(recommend to edit further)
@@ -20,7 +22,7 @@
 namespace DiceParser{
 
     std::random_device SeedGen;
-    std::default_random_engine Engine(SeedGen());
+    std::mt19937_64 Engine(SeedGen());
 
     typedef char16_t _char;
     typedef std::variant<double,_char,std::string> _Variant;
@@ -43,8 +45,8 @@ namespace DiceParser{
 
     // actually this is wrapper of std
     const std::unordered_map<std::string,std::tuple<std::string,unsigned,std::any >> Functions{
-        {"pi",std::make_tuple("pi",0u,  (std::function<double(void)>)[]()->double{return 3.14159265;})},
-        {"tau",std::make_tuple("tau",0u,  (std::function<double(void)>)[]()->double{return 3.14159265*2.;})},
+        {"pi",std::make_tuple("pi",0u,  (std::function<double(void)>)[]()->double{return pi;})},
+        {"tau",std::make_tuple("tau",0u,  (std::function<double(void)>)[]()->double{return pi*2.;})},
 
         {"floor",std::make_tuple("floor",1u,(std::function<double(double)>)[](double x)->double{return static_cast<double>(std::floor(x));})},
         {"ceil",std::make_tuple("ceil",1u,  (std::function<double(double)>)[](double x)->double{return static_cast<double>(std::ceil(x) ); })},
@@ -52,10 +54,19 @@ namespace DiceParser{
         {"cos",std::make_tuple("cos",1u,  (std::function<double(double)>)[](double x)->double{return static_cast<double>(std::cos(x) ); })},
         {"tan",std::make_tuple("tan",1u,  (std::function<double(double)>)[](double x)->double{return static_cast<double>(std::tan(x) ); })},
         {"sqrt",std::make_tuple("sqrt",1u,  (std::function<double(double)>)[](double x)->double{return static_cast<double>(std::sqrt(x) ); })},
+        {"toradians",std::make_tuple("toradians",1u,  (std::function<double(double)>)[](double x)->double{return static_cast<double>(x*pi/180.); })},
+        {"todegrees",std::make_tuple("todegrees",1u,  (std::function<double(double)>)[](double x)->double{return static_cast<double>(x/pi*180.); })},
 
         {"pow",std::make_tuple("pow",2u,  (std::function<double(double,double)>)[](double x,double y)->double{return static_cast<double>(std::pow(x,y) ); })},
     };
     
+    long RollDice(long x,long y){
+        std::uniform_int_distribution<long> dist(1,y);
+        long ans;
+        for(long i=0l;i<x;i++)ans += dist(Engine);
+        return ans;
+    }
+
     double parse(std::basic_string<_char> Target){
 
         std::deque<_Variant> OutArr,AuxArr;
@@ -74,11 +85,11 @@ namespace DiceParser{
         };
 
         _char last_val;
-
-        for(int i=0;i<Target.size();i++){
+        TempBuffer.clear();
+        for(unsigned long i=0;i<Target.size();i++){
             _char val = Target[i];
 
-            if(std::isdigit(val) || val==Period || ((val==Sub || val==Add) && last_val!=RightBracket && !isNumber) && !isFunction ){
+            if((std::isdigit(val) || val==Period || ((val==Sub || val==Add) && (last_val!=RightBracket && !isNumber))) && !isFunction ){
                 isNumber = true;
                 TempBuffer += val;
             }else{
@@ -87,7 +98,7 @@ namespace DiceParser{
 
                 if(isNumber) f(0);
                 val = std::tolower(val);
-                if(!isalpha(val)){
+                if(!isalpha(val) || (!isFunction && val==Roll)){
                     _char OpBack = ' ';
                     if(!OpArr.empty()){
                         if(std::holds_alternative<_char>(OpArr.back()))
@@ -103,7 +114,8 @@ namespace DiceParser{
                                     OpArr.push_back( std::get<0>(Functions.at(TempBuffer)) );
                                 TempBuffer.clear();
                             }
-                            if((isNumber&&(Alert=true)) || last_val == RightBracket )OpArr.push_back(Mul);OpArr.push_back(val);
+                            if((isNumber&&(Alert=true)) || last_val == RightBracket )OpArr.push_back(Mul);
+                            OpArr.push_back(val);
                         }break;
                         case RightBracket:
                             {
@@ -115,7 +127,8 @@ namespace DiceParser{
                                             OpBack = 0;
                                     }
                                 };
-                                if(OpArr.empty())throw std::runtime_error("Mismatch brackets");OpArr.pop_back();
+                                if(OpArr.empty())throw std::runtime_error("Mismatch brackets");
+                                OpArr.pop_back();
                                 if(!OpArr.empty())
                                     if(!std::holds_alternative<_char>(OpArr.back()))
                                         {OutArr.push_back(OpArr.back());OpArr.pop_back();}
@@ -139,7 +152,7 @@ namespace DiceParser{
                     }
                 }else{
                     isFunction = true;
-                    TempBuffer += val;
+                    TempBuffer += std::tolower(val);
                 }
                 isNumber = false;
             }
@@ -185,10 +198,9 @@ namespace DiceParser{
                         case Mul:v1=PopValue();v2=PopValue();OutArr.push_back(v2*v1);break;
                         case Div:v1=PopValue();v2=PopValue();OutArr.push_back(v2/v1);break;
                         case Roll:{
-                            v1=std::min(std::get<double>(OutArr.back()),1024.);OutArr.pop_back();
-                            v2=std::get<double>(OutArr.back());OutArr.pop_back();
-                            std::uniform_int_distribution<> dist(1l,static_cast<double>(v2));
-                            double ans=0.;for(int i=0;i<v1;i++)ans += static_cast<double>(dist(Engine));
+                            v2=PopValue();v1=PopValue();
+                            double ans=static_cast<double>(RollDice(static_cast<long>(v1),static_cast<long>(v2)));
+                            std::cout<<ans<<std::endl;
                             OutArr.push_back(ans);break;
                             }
                         default:throw std::runtime_error("Invalid operator");break;
@@ -237,7 +249,7 @@ namespace DiceParser{
 
 std::u16string stdstrtou16str(std::string x){
     std::u16string y;
-    for(int i=0;i<x.length();i++)
+    for(unsigned long i=0;i<x.length();i++)
         y+=(char16_t)x[i];
     return y;
 }
