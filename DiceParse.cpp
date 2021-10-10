@@ -61,14 +61,13 @@ namespace DiceParser{
     };
     
     long RollDice(long x,long y){
-        std::uniform_int_distribution<long> dist(1,y);
-        long ans;
+        std::uniform_int_distribution<long> dist(1l,y);
+        long ans = 0l;
         for(long i=0l;i<x;i++)ans += dist(Engine);
         return ans;
     }
 
     double parse(std::basic_string<_char> Target){
-
         std::deque<_Variant> OutArr,AuxArr;
         std::vector<_Variant> OpArr;
         std::string TempBuffer;
