@@ -83,6 +83,15 @@ namespace DiceParser{
             TempBuffer.clear();if(Reset)isNumber = false;
         };
 
+        auto f2 = [&OpArr](_char *OpBack){
+            if(!OpArr.empty()){
+                if(std::holds_alternative<_char>(OpArr.back()))
+                    *OpBack = std::get<_char>(OpArr.back());
+                else
+                    *OpBack = 0;
+            }
+        };
+
         _char last_val;
         TempBuffer.clear();
         for(unsigned long i=0;i<Target.size();i++){
@@ -99,12 +108,7 @@ namespace DiceParser{
                 val = std::tolower(val);
                 if(!isalpha(val) || (!isFunction && val==Roll)){
                     _char OpBack = ' ';
-                    if(!OpArr.empty()){
-                        if(std::holds_alternative<_char>(OpArr.back()))
-                            OpBack = std::get<_char>(OpArr.back());
-                        else
-                            OpBack = Func;
-                    }
+                    f2(&OpBack);
                     switch(val){
                         case LeftBracket:{
                             if(isFunction){
@@ -119,12 +123,7 @@ namespace DiceParser{
                         case RightBracket:
                             {
                                 while( !OpArr.empty() && OpBack != LeftBracket){OutArr.push_back(OpBack);OpArr.pop_back();
-                                    if(!OpArr.empty()){
-                                        if(std::holds_alternative<_char>(OpArr.back()))
-                                            OpBack = std::get<_char>(OpArr.back());
-                                        else
-                                            OpBack = 0;
-                                    }
+                                    f2(&OpBack);
                                 };
                                 if(OpArr.empty())throw std::runtime_error("Mismatch brackets");
                                 OpArr.pop_back();
@@ -140,12 +139,7 @@ namespace DiceParser{
                             _char op2;
                             while( !OpArr.empty() && OperatorPrecedence.contains(op2=OpBack) && OperatorPrecedence.at(op2)>=currentprec){
                                 OutArr.push_back(op2);OpArr.pop_back();
-                                if(!OpArr.empty()){
-                                    if(std::holds_alternative<_char>(OpArr.back()))
-                                        OpBack = std::get<_char>(OpArr.back());
-                                    else
-                                        OpBack = 0;
-                                }
+                                f2(&OpBack);
                             }
                             OpArr.push_back(val);break;
                     }
@@ -199,7 +193,6 @@ namespace DiceParser{
                         case Roll:{
                             v2=PopValue();v1=PopValue();
                             double ans=static_cast<double>(RollDice(static_cast<long>(v1),static_cast<long>(v2)));
-                            std::cout<<ans<<std::endl;
                             OutArr.push_back(ans);break;
                             }
                         default:throw std::runtime_error("Invalid operator");break;
@@ -211,14 +204,14 @@ namespace DiceParser{
                 unsigned augc = std::get<1>(Data);
                 switch(augc){
                     case 0u:{
-                        auto Func = std::any_cast<std::function<double()>>(std::get<2>(Data));
-                        OutArr.push_back( Func() );}break;
+                        auto _Func = std::any_cast<std::function<double()>>(std::get<2>(Data));
+                        OutArr.push_back( _Func() );}break;
                     case 1u:{
-                        auto Func = std::any_cast<std::function<double(double)>>(std::get<2>(Data));
-                        OutArr.push_back( Func( PopValue() ) );}break;
+                        auto _Func = std::any_cast<std::function<double(double)>>(std::get<2>(Data));
+                        OutArr.push_back( _Func( PopValue() ) );}break;
                     case 2u:{
-                        auto Func = std::any_cast<std::function<double(double,double)>>(std::get<2>(Data));
-                        OutArr.push_back( Func( PopValue(), PopValue() ) );}break;
+                        auto _Func = std::any_cast<std::function<double(double,double)>>(std::get<2>(Data));
+                        OutArr.push_back( _Func( PopValue(), PopValue() ) );}break;
                     default:throw std::runtime_error("Too many augurments");
                 }
             }
